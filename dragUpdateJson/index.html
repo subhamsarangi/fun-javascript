@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Draggable List with JSON</title>
+    <style>
+        body {
+            display: flex;
+            justify-content: space-between;
+            font-family: Arial, sans-serif;
+        }
+
+        .container {
+            width: 45%;
+        }
+
+        ul {
+            list-style-type: none;
+            padding: 0;
+        }
+
+        li {
+            padding: 10px;
+            margin: 5px;
+            background-color: #f0f0f0;
+            border: 1px solid #ccc;
+            cursor: grab;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        li.dragging {
+            transform: scale(1.1) rotate(5deg);
+            box-shadow: 5px 5px 15px rgba(0, 0, 0, 0.2);
+            cursor: grabbing;
+            opacity: 0.8;
+        }
+
+        .json-container {
+            white-space: pre-wrap;
+            background-color: #ffffff;
+            border: 1px solid #ccc;
+            padding: 10px;
+            transition: background-color 0.5s ease-out;
+        }
+
+        .json-container.flash {
+            background-color: #ffe082; /* Light yellow flash effect */
+        }
+
+        .copy-btn {
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h3>Draggable List</h3>
+        <ul id="draggable-list">
+            <li draggable="true" data-id="1">Item 1</li>
+            <li draggable="true" data-id="2">Item 2</li>
+            <li draggable="true" data-id="3">Item 3</li>
+            <li draggable="true" data-id="4">Item 4</li>
+            <li draggable="true" data-id="5">Item 5</li>
+            <li draggable="true" data-id="6">Item 6</li>
+        </ul>
+    </div>
+
+    <div class="container">
+        <h3>JSON Representation</h3>
+        <div id="json-output" class="json-container"></div>
+        <button class="copy-btn" onclick="copyJSON()">Copy JSON</button>
+    </div>
+
+    <script>
+        const list = document.getElementById('draggable-list');
+        const jsonOutput = document.getElementById('json-output');
+        let draggedItem = null;
+	
+	function loadJSON() {
+            const items = [...list.querySelectorAll('li')].map(item => ({
+                id: item.dataset.id,
+                text: item.textContent.trim()
+            }));
+            jsonOutput.textContent = JSON.stringify(items, null, 4);
+
+        }
+        function updateJSON() {
+            loadJSON();
+            triggerFlash();
+        }
+
+        function triggerFlash() {
+            jsonOutput.classList.add('flash');
+            setTimeout(() => {
+                jsonOutput.classList.remove('flash');
+            }, 500); // Flash effect lasts for 2 seconds
+        }
+
+        function copyJSON() {
+            const range = document.createRange();
+            range.selectNode(jsonOutput);
+            window.getSelection().removeAllRanges();
+            window.getSelection().addRange(range);
+            document.execCommand('copy');
+            alert('JSON copied to clipboard');
+        }
+
+        list.addEventListener('dragstart', (e) => {
+            draggedItem = e.target;
+            e.target.classList.add('dragging');
+        });
+
+        list.addEventListener('dragend', (e) => {
+            e.target.classList.remove('dragging');
+            draggedItem = null;
+            updateJSON();
+        });
+
+        list.addEventListener('dragover', (e) => {
+            e.preventDefault();
+        });
+
+        list.addEventListener('drop', (e) => {
+            if (e.target.tagName === 'LI' && draggedItem !== e.target) {
+                const draggedIndex = [...list.children].indexOf(draggedItem);
+                const targetIndex = [...list.children].indexOf(e.target);
+                if (draggedIndex < targetIndex) {
+                    list.insertBefore(draggedItem, e.target.nextSibling);
+                } else {
+                    list.insertBefore(draggedItem, e.target);
+                }
+            }
+            updateJSON();
+        });
+
+        // Initialize JSON on page load
+        loadJSON();
+    </script>
+</body>
+</html>
